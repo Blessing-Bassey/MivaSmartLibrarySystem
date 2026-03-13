@@ -1,6 +1,14 @@
 import controller.BorrowController;
 import controller.LibraryManager;
+import controller.ReminderService;
+import controller.ReportGenerator;
 import model.*;
+import utils.FileHandler;
+import utils.IDGenerator;
+import utils.ValidationHelper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -8,6 +16,8 @@ public class Main {
 
         LibraryManager manager = new LibraryManager(database);
         BorrowController borrowController = new BorrowController(database);
+        ReportGenerator reportGenerator = new ReportGenerator(database);
+        ReminderService reminderService = new ReminderService(database);
 
         Book book1 = new Book(
                 "B001",
@@ -22,40 +32,31 @@ public class Main {
                 "Purchased"
         );
 
-        Magazine magazine1 = new Magazine(
-                "M001",
-                "Science Today",
-                "Editorial Team",
-                2024,
-                1,
-                "Available",
-                12,
-                "Science Press"
-        );
-
         UserAccount user1 = new UserAccount("U001", "Blessing Bassey", "Data Science", 200);
 
         manager.addItem(book1);
-        manager.addItem(magazine1);
         database.addUser(user1);
-
-        System.out.println("Before borrowing:");
-        for (LibraryItem item : database.getItems()) {
-            System.out.println(item.getTitle() + " - Quantity: " + item.getQuantity());
-        }
 
         borrowController.borrowItem("U001", "B001");
 
-        System.out.println("\nAfter borrowing:");
-        for (LibraryItem item : database.getItems()) {
-            System.out.println(item.getTitle() + " - Quantity: " + item.getQuantity());
-        }
+        System.out.println(reportGenerator.generateMostBorrowedReport());
+        System.out.println(reportGenerator.generateCategoryDistributionReport());
 
-        borrowController.returnItem("T1");
+        reminderService.sendReminder();
 
-        System.out.println("\nAfter returning:");
-        for (LibraryItem item : database.getItems()) {
-            System.out.println(item.getTitle() + " - Quantity: " + item.getQuantity());
+        System.out.println("Generated Item ID: " + IDGenerator.generateItemId());
+        System.out.println("Validation Test: " +
+                ValidationHelper.validateItemInput("B002", "Algorithms", "Cormen"));
+
+        List<Book> booksToSave = new ArrayList<>();
+        booksToSave.add(book1);
+
+        FileHandler.saveBooks(booksToSave, "books.txt");
+        List<Book> loadedBooks = FileHandler.loadBooks("books.txt");
+
+        System.out.println("Loaded books from file:");
+        for (Book book : loadedBooks) {
+            System.out.println(book.getTitle());
         }
     }
 }
