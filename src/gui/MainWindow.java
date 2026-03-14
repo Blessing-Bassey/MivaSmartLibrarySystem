@@ -45,7 +45,7 @@ public class MainWindow extends JFrame {
         tabbedPane.addTab("Borrow / Return", borrowReturnPanel);
         tabbedPane.addTab("Admin", adminPanel);
         tabbedPane.addTab("Search & Sort", new SearchSortPanel(database));
-        tabbedPane.addTab("Reports", new JPanel());
+        tabbedPane.addTab("Reports", new ReportPanel(database));
 
         add(tabbedPane, BorderLayout.CENTER);
 
