@@ -1,0 +1,1 @@
+B001,Java Programming,James Gosling,2020,1,Available,ISBN12345,2023-01-10,,Purchased
