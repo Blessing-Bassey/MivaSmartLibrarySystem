@@ -6,9 +6,13 @@ import model.Journal;
 import model.LibraryDatabase;
 import model.LibraryItem;
 import model.Magazine;
+import utils.FileHandler;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdminPanel extends JPanel {
     private JComboBox<String> itemTypeComboBox;
@@ -30,10 +34,21 @@ public class AdminPanel extends JPanel {
     private JButton undoButton;
     private JTextArea outputArea;
 
-    public AdminPanel(LibraryDatabase database, LibraryManager libraryManager, ViewItemsPanel viewItemsPanel) {
-        setLayout(new BorderLayout());
+    public AdminPanel(LibraryDatabase database, LibraryManager libraryManager, ViewItemsPanel viewItemsPanel, MainWindow mainWindow) {
+        setLayout(new BorderLayout(20, 20));
+        setBackground(UITheme.BG);
+        setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        RoundedPanel formCard = new RoundedPanel(Color.WHITE, 28);
+        formCard.setLayout(new BorderLayout());
+        formCard.setBorder(new EmptyBorder(24, 24, 24, 24));
+
+        JLabel title = UITheme.makeSectionTitle("Admin");
+        formCard.add(title, BorderLayout.NORTH);
 
         JPanel formPanel = new JPanel(new GridLayout(10, 2, 8, 8));
+        formPanel.setOpaque(false);
+        formPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
 
         formPanel.add(new JLabel("Item Type:"));
         itemTypeComboBox = new JComboBox<>(new String[]{"Book", "Magazine", "Journal"});
@@ -74,38 +89,47 @@ public class AdminPanel extends JPanel {
         extraField3 = new JTextField();
         formPanel.add(extraField3);
 
-        addButton = new JButton("Add Item");
-        deleteButton = new JButton("Delete Item");
-        undoButton = new JButton("Undo Last Action");
+        addButton = UITheme.createPrimaryButton("Add Item");
+        deleteButton = UITheme.createSecondaryButton("Delete Item");
+        undoButton = UITheme.createSecondaryButton("Undo Last Action");
 
         formPanel.add(addButton);
         formPanel.add(deleteButton);
 
-        add(formPanel, BorderLayout.NORTH);
+        formCard.add(formPanel, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(undoButton, BorderLayout.NORTH);
+        RoundedPanel bottomCard = new RoundedPanel(Color.WHITE, 28);
+        bottomCard.setLayout(new BorderLayout());
+        bottomCard.setBorder(new EmptyBorder(20, 24, 24, 24));
+
+        bottomCard.add(undoButton, BorderLayout.NORTH);
 
         outputArea = new JTextArea();
         outputArea.setEditable(false);
-        bottomPanel.add(new JScrollPane(outputArea), BorderLayout.CENTER);
+        outputArea.setFont(UITheme.bodyFont(14));
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
 
-        add(bottomPanel, BorderLayout.CENTER);
+        JScrollPane outputScroll = new JScrollPane(outputArea);
+        outputScroll.setBorder(new EmptyBorder(16, 0, 0, 0));
+        bottomCard.add(outputScroll, BorderLayout.CENTER);
+
+        add(formCard, BorderLayout.NORTH);
+        add(bottomCard, BorderLayout.CENTER);
 
         updateExtraFieldLabels();
-
         itemTypeComboBox.addActionListener(e -> updateExtraFieldLabels());
 
         addButton.addActionListener(e -> {
             try {
                 String type = (String) itemTypeComboBox.getSelectedItem();
                 String itemId = itemIdField.getText().trim();
-                String title = titleField.getText().trim();
+                String itemTitle = titleField.getText().trim();
                 String author = authorField.getText().trim();
                 String yearText = yearField.getText().trim();
                 String quantityText = quantityField.getText().trim();
 
-                if (itemId.isEmpty() || title.isEmpty() || author.isEmpty() || yearText.isEmpty() || quantityText.isEmpty()) {
+                if (itemId.isEmpty() || itemTitle.isEmpty() || author.isEmpty() || yearText.isEmpty() || quantityText.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Please fill in all required fields.");
                     return;
                 }
@@ -123,7 +147,7 @@ public class AdminPanel extends JPanel {
 
                     newItem = new Book(
                             itemId,
-                            title,
+                            itemTitle,
                             author,
                             year,
                             quantity,
@@ -141,7 +165,7 @@ public class AdminPanel extends JPanel {
 
                     newItem = new Magazine(
                             itemId,
-                            title,
+                            itemTitle,
                             author,
                             year,
                             quantity,
@@ -157,7 +181,7 @@ public class AdminPanel extends JPanel {
 
                     newItem = new Journal(
                             itemId,
-                            title,
+                            itemTitle,
                             author,
                             year,
                             quantity,
@@ -169,7 +193,10 @@ public class AdminPanel extends JPanel {
 
                 if (newItem != null) {
                     libraryManager.addItem(newItem);
+                    saveBooksToFile(database);
                     viewItemsPanel.refreshTable(database);
+                    mainWindow.refreshDashboard();
+
                     outputArea.append("Added successfully: " + newItem.getTitle() + "\n");
                     JOptionPane.showMessageDialog(this, "Item added successfully.");
                     clearFields();
@@ -191,7 +218,10 @@ public class AdminPanel extends JPanel {
             }
 
             libraryManager.deleteItem(itemId);
+            saveBooksToFile(database);
             viewItemsPanel.refreshTable(database);
+            mainWindow.refreshDashboard();
+
             outputArea.append("Delete request processed for Item ID: " + itemId + "\n");
             JOptionPane.showMessageDialog(this, "Delete request processed.");
             clearFields();
@@ -199,7 +229,10 @@ public class AdminPanel extends JPanel {
 
         undoButton.addActionListener(e -> {
             libraryManager.undoLastAction();
+            saveBooksToFile(database);
             viewItemsPanel.refreshTable(database);
+            mainWindow.refreshDashboard();
+
             outputArea.append("Undo action processed.\n");
             JOptionPane.showMessageDialog(this, "Undo completed.");
         });
@@ -237,5 +270,17 @@ public class AdminPanel extends JPanel {
         extraField1.setText("");
         extraField2.setText("");
         extraField3.setText("");
+    }
+
+    private void saveBooksToFile(LibraryDatabase database) {
+        List<Book> booksToSave = new ArrayList<>();
+
+        for (LibraryItem item : database.getItems()) {
+            if (item instanceof Book) {
+                booksToSave.add((Book) item);
+            }
+        }
+
+        FileHandler.saveBooks(booksToSave, "books.txt");
     }
 }
