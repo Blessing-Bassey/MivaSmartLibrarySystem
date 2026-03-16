@@ -38,7 +38,7 @@ public class MainWindow extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         ViewItemsPanel viewItemsPanel = new ViewItemsPanel(database);
-        BorrowReturnPanel borrowReturnPanel = new BorrowReturnPanel(database);
+        BorrowReturnPanel borrowReturnPanel = new BorrowReturnPanel(database, viewItemsPanel);
         AdminPanel adminPanel = new AdminPanel(database, libraryManager, viewItemsPanel);
 
         tabbedPane.addTab("View Items", viewItemsPanel);
