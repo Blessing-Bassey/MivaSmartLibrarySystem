@@ -14,7 +14,7 @@ public class BorrowReturnPanel extends JPanel {
     private JButton returnButton;
     private JTextArea outputArea;
 
-    public BorrowReturnPanel(LibraryDatabase database) {
+    public BorrowReturnPanel(LibraryDatabase database, ViewItemsPanel viewItemsPanel) {
         BorrowController borrowController = new BorrowController(database);
 
         setLayout(new BorderLayout());
@@ -46,19 +46,33 @@ public class BorrowReturnPanel extends JPanel {
         add(new JScrollPane(outputArea), BorderLayout.CENTER);
 
         borrowButton.addActionListener(e -> {
-            String borrowerId = borrowerIdField.getText();
-            String itemId = itemIdField.getText();
+            String borrowerId = borrowerIdField.getText().trim();
+            String itemId = itemIdField.getText().trim();
+
+            if (borrowerId.isEmpty() || itemId.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter both Borrower ID and Item ID.");
+                return;
+            }
 
             borrowController.borrowItem(borrowerId, itemId);
+            viewItemsPanel.refreshTable(database);
             outputArea.append("Borrow request processed for Borrower ID: " + borrowerId +
                     ", Item ID: " + itemId + "\n");
+            JOptionPane.showMessageDialog(this, "Borrow request processed.");
         });
 
         returnButton.addActionListener(e -> {
-            String transactionId = transactionIdField.getText();
+            String transactionId = transactionIdField.getText().trim();
+
+            if (transactionId.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a Transaction ID.");
+                return;
+            }
 
             borrowController.returnItem(transactionId);
+            viewItemsPanel.refreshTable(database);
             outputArea.append("Return request processed for Transaction ID: " + transactionId + "\n");
+            JOptionPane.showMessageDialog(this, "Return request processed.");
         });
     }
 }
